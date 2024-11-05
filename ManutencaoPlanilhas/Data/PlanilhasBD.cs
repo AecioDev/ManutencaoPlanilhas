@@ -11,6 +11,25 @@ namespace ManutencaoPlanilhas.Data
         private string _connectionString = @"Data Source=" + Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "planilhas.db") + ";Version=3;";
 
 
+        public void ExecMigrations()
+        {
+            var migrationManager = new MigrationManager(_connectionString);
+            if (migrationManager.RunMigrations())
+                return;
+        }
+
+        public void CarregaDadosPlanilha(string filePath)
+        {
+            var DadosPlanilha = new Resumo(_connectionString);
+            DadosPlanilha.CarregaTabelaTemporaria(filePath);
+        }
+
+        public void CriaPlanilhaResumo(string filePath, string nomeEmpresa, int anoMov)
+        {
+            var resumo = new Resumo(_connectionString);
+            resumo.GeraPlanilhaResumo(filePath, nomeEmpresa, anoMov);
+        }
+
         public Int16 SaveExcelToDatabase(string filePath, string tipo)
         {
             try
@@ -18,7 +37,7 @@ namespace ManutencaoPlanilhas.Data
                 // Verifica se o arquivo existe
                 if (!File.Exists(filePath))
                 {
-                    MessageBox.Show("O arquivo especificado não foi encontrado.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("A planilha informada não foi encontrada.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return 1; // Falha, arquivo não encontrado
                 }
 

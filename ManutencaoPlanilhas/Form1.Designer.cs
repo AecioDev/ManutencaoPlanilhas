@@ -41,6 +41,9 @@
             this.lb_Info = new System.Windows.Forms.Label();
             this.tb_MsgInfo = new System.Windows.Forms.TextBox();
             this.bt_NovaPlanilha = new System.Windows.Forms.PictureBox();
+            this.bt_resumo = new System.Windows.Forms.Button();
+            this.label3 = new System.Windows.Forms.Label();
+            this.tb_Empresa = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.bt_NovaPlanilha)).BeginInit();
             this.SuspendLayout();
@@ -49,7 +52,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(11, 86);
+            this.label1.Location = new System.Drawing.Point(12, 106);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(92, 13);
             this.label1.TabIndex = 0;
@@ -57,14 +60,14 @@
             // 
             // tb_PastaRaiz
             // 
-            this.tb_PastaRaiz.Location = new System.Drawing.Point(14, 102);
+            this.tb_PastaRaiz.Location = new System.Drawing.Point(15, 122);
             this.tb_PastaRaiz.Name = "tb_PastaRaiz";
             this.tb_PastaRaiz.Size = new System.Drawing.Size(326, 20);
             this.tb_PastaRaiz.TabIndex = 2;
             // 
             // bt_Pasta
             // 
-            this.bt_Pasta.Location = new System.Drawing.Point(346, 101);
+            this.bt_Pasta.Location = new System.Drawing.Point(347, 121);
             this.bt_Pasta.Name = "bt_Pasta";
             this.bt_Pasta.Size = new System.Drawing.Size(30, 22);
             this.bt_Pasta.TabIndex = 2;
@@ -89,7 +92,7 @@
             this.groupBox1.Controls.Add(this.rb_Acerto);
             this.groupBox1.Controls.Add(this.rb_Socios);
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox1.Location = new System.Drawing.Point(14, 29);
+            this.groupBox1.Location = new System.Drawing.Point(15, 49);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(362, 45);
             this.groupBox1.TabIndex = 0;
@@ -112,7 +115,7 @@
             // 
             // bt_Adicionar
             // 
-            this.bt_Adicionar.Location = new System.Drawing.Point(305, 149);
+            this.bt_Adicionar.Location = new System.Drawing.Point(306, 169);
             this.bt_Adicionar.Name = "bt_Adicionar";
             this.bt_Adicionar.Size = new System.Drawing.Size(71, 22);
             this.bt_Adicionar.TabIndex = 4;
@@ -124,7 +127,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(11, 135);
+            this.label2.Location = new System.Drawing.Point(12, 155);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(73, 13);
             this.label2.TabIndex = 0;
@@ -133,7 +136,7 @@
             // tb_Nome
             // 
             this.tb_Nome.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
-            this.tb_Nome.Location = new System.Drawing.Point(14, 151);
+            this.tb_Nome.Location = new System.Drawing.Point(15, 171);
             this.tb_Nome.Name = "tb_Nome";
             this.tb_Nome.Size = new System.Drawing.Size(158, 20);
             this.tb_Nome.TabIndex = 3;
@@ -158,7 +161,7 @@
             this.tb_MsgInfo.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.tb_MsgInfo.Font = new System.Drawing.Font("Lato", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tb_MsgInfo.ForeColor = System.Drawing.SystemColors.MenuHighlight;
-            this.tb_MsgInfo.Location = new System.Drawing.Point(11, 177);
+            this.tb_MsgInfo.Location = new System.Drawing.Point(12, 197);
             this.tb_MsgInfo.Name = "tb_MsgInfo";
             this.tb_MsgInfo.ReadOnly = true;
             this.tb_MsgInfo.Size = new System.Drawing.Size(362, 15);
@@ -179,18 +182,50 @@
             this.bt_NovaPlanilha.MouseEnter += new System.EventHandler(this.bt_NovaPlanilha_MouseEnter);
             this.bt_NovaPlanilha.MouseLeave += new System.EventHandler(this.bt_NovaPlanilha_MouseLeave);
             // 
+            // bt_resumo
+            // 
+            this.bt_resumo.Location = new System.Drawing.Point(229, 169);
+            this.bt_resumo.Name = "bt_resumo";
+            this.bt_resumo.Size = new System.Drawing.Size(71, 22);
+            this.bt_resumo.TabIndex = 4;
+            this.bt_resumo.Text = "Resumo";
+            this.bt_resumo.UseVisualStyleBackColor = true;
+            this.bt_resumo.Click += new System.EventHandler(this.bt_resumo_Click);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.Location = new System.Drawing.Point(12, 5);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(55, 13);
+            this.label3.TabIndex = 0;
+            this.label3.Text = "Empresa";
+            // 
+            // tb_Empresa
+            // 
+            this.tb_Empresa.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
+            this.tb_Empresa.Location = new System.Drawing.Point(15, 21);
+            this.tb_Empresa.Name = "tb_Empresa";
+            this.tb_Empresa.Size = new System.Drawing.Size(215, 20);
+            this.tb_Empresa.TabIndex = 3;
+            this.tb_Empresa.Text = "AECIO";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(386, 199);
+            this.ClientSize = new System.Drawing.Size(386, 224);
             this.Controls.Add(this.bt_NovaPlanilha);
             this.Controls.Add(this.tb_MsgInfo);
             this.Controls.Add(this.lb_Info);
+            this.Controls.Add(this.bt_resumo);
             this.Controls.Add(this.bt_Adicionar);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.bt_Pasta);
+            this.Controls.Add(this.tb_Empresa);
             this.Controls.Add(this.tb_Nome);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.tb_PastaRaiz);
             this.Controls.Add(this.label1);
@@ -223,6 +258,9 @@
         private System.Windows.Forms.Label lb_Info;
         private System.Windows.Forms.TextBox tb_MsgInfo;
         private System.Windows.Forms.PictureBox bt_NovaPlanilha;
+        private System.Windows.Forms.Button bt_resumo;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TextBox tb_Empresa;
     }
 }
 

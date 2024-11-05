@@ -14,6 +14,10 @@ namespace ManutencaoPlanilhas
         public Form1()
         {
             InitializeComponent();
+
+            var migrationManager = new PlanilhasBD();
+            migrationManager.ExecMigrations();
+
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -105,6 +109,10 @@ namespace ManutencaoPlanilhas
             }
                         
             MessageBox.Show("Planilha (as) Geradas com Sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            //Executa Planilha de Resumo.
+
+
             this.Close();
 
         }
@@ -169,7 +177,7 @@ namespace ManutencaoPlanilhas
                     {
                         OpenFileDialog buscaSheet = new OpenFileDialog();
 
-                        // Define o filtro para mostrar apenas arquivos de imagem
+                        // Define o filtro para mostrar apenas arquivos do Excel
                         buscaSheet.Filter = "Arquivos do Excel|*.xlsx";
 
                         if (buscaSheet.ShowDialog() == DialogResult.OK)
@@ -338,16 +346,6 @@ namespace ManutencaoPlanilhas
             }
         }
 
-        private void lb_Info_MouseEnter(object sender, EventArgs e)
-        {
-            tb_MsgInfo.Text = "Dois Cliques para Abrir as Informações do Sistema.";
-        }
-
-        private void lb_Info_MouseLeave(object sender, EventArgs e)
-        {
-            tb_MsgInfo.Text = "";
-        }
-
         private string ConverteMes(int num)
         {
             string MesChar = "";
@@ -392,6 +390,16 @@ namespace ManutencaoPlanilhas
             }
 
             return MesChar;
+        }
+
+        private void lb_Info_MouseEnter(object sender, EventArgs e)
+        {
+            tb_MsgInfo.Text = "Dois Cliques para Abrir as Informações do Sistema.";
+        }
+
+        private void lb_Info_MouseLeave(object sender, EventArgs e)
+        {
+            tb_MsgInfo.Text = "";
         }
 
         private void tb_Nome_MouseEnter(object sender, EventArgs e)
@@ -443,6 +451,15 @@ namespace ManutencaoPlanilhas
                 "e Salva na Pasta Principal com o nome do Sócio. Exemplo: SOCIO.xlsx";
 
             MessageBox.Show(info, "Informações do Sistema!", MessageBoxButtons.OK);
+        }
+
+        private void bt_resumo_Click(object sender, EventArgs e)
+        {
+            PlanilhasBD sheet = new PlanilhasBD();
+            PatchPlanilha = tb_PastaRaiz.Text + "\\GERALDO.xlsx";
+            //sheet.CarregaDadosPlanilha(PatchPlanilha);
+
+            sheet.CriaPlanilhaResumo(tb_PastaRaiz.Text, tb_Empresa.Text, DateTime.Now.Year);
         }
     }
 }
