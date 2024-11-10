@@ -20,17 +20,9 @@ public class MigrationManager
             {
                 connection.Open();
 
-                // Verificar e criar a tabela Acerto
-                if (!TableExists(connection, "Acerto"))
-                {
-                    CreateAcertoTable(connection);
-                }
-
-                // Verificar e criar a tabela DespesasAcerto
-                if (!TableExists(connection, "DespesasAcerto"))
-                {
-                    CreateDespesasAcertoTable(connection);
-                }
+                CreateTablesDB(connection);     //Adicionar aqui as tabelas do BD
+                CreateIndexes(connection);      //Adicionar aqui os indices
+                //UpdateTablesDB(connection);   //Criar aqui novos campos
 
                 connection.Close();
             }
@@ -43,18 +35,42 @@ public class MigrationManager
             return false;
         }
     }
+    
 
-    private bool TableExists(SQLiteConnection connection, string tableName)
+    private void CreateTablesDB(SQLiteConnection connection)
     {
-        using (var command = new SQLiteCommand($"SELECT name FROM sqlite_master WHERE type='table' AND name='{tableName}';", connection))
+        string tableQuery = "";
+
+        if (!TableExists(connection, "Empresa"))
         {
-            return command.ExecuteScalar() != null;
-        }
-    }
+            tableQuery = @"
+            CREATE TABLE Empresa (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                NomeEmpresa TEXT
+            );";
 
-    private void CreateAcertoTable(SQLiteConnection connection)
-    {
-        string createTableQuery = @"
+            ExecuteQuery(tableQuery, connection);
+        }
+
+        if (!TableExists(connection, "Planilhas"))
+        {
+            tableQuery = @"
+            CREATE TABLE Planilhas (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+	            EmpresaId INTEGER,
+                NomeArquivo TEXT,
+                ArquivoBlob BLOB,
+                DataInclusao TEXT,
+                Tipo TEXT,
+                FOREIGN KEY (EmpresaId) REFERENCES Empresa(Id) ON DELETE CASCADE
+            );";
+
+            ExecuteQuery(tableQuery, connection);
+        }
+
+        if (!TableExists(connection, "Acerto"))
+        {
+            tableQuery = @"
             CREATE TABLE Acerto (
                 acertoId INTEGER PRIMARY KEY AUTOINCREMENT,
                 ano INTEGER,
@@ -80,15 +96,12 @@ public class MigrationManager
                 ObsAcerto TEXT
             );";
 
-        using (var command = new SQLiteCommand(createTableQuery, connection))
-        {
-            command.ExecuteNonQuery();
+            ExecuteQuery(tableQuery, connection);
         }
-    }
 
-    private void CreateDespesasAcertoTable(SQLiteConnection connection)
-    {
-        string createTableQuery = @"
+        if (!TableExists(connection, "DespesasAcerto"))
+        {
+            tableQuery = @"
             CREATE TABLE DespesasAcerto (
                 despesasId INTEGER PRIMARY KEY AUTOINCREMENT,
                 acertoId INTEGER,
@@ -98,7 +111,74 @@ public class MigrationManager
                 FOREIGN KEY (acertoId) REFERENCES Acerto(acertoId) ON DELETE CASCADE
             );";
 
-        using (var command = new SQLiteCommand(createTableQuery, connection))
+            ExecuteQuery(tableQuery, connection);
+        }
+    }
+
+    private void CreateIndexes(SQLiteConnection connection)
+    {
+        string indexQuery = "";
+
+        if (TableExists(connection, "Planilhas") && !IndexExists(connection, "IDX_Planilhas_TipoAndData"))
+        {
+            indexQuery = @"CREATE UNIQUE INDEX ""IDX_Planilhas_TipoAndData"" ON ""Planilhas"" (""Tipo"", ""DataInclusao"" DESC);";
+            ExecuteQuery(indexQuery, connection);
+        }
+    }
+
+    /* De3scomentar qd precisar
+    private void UpdateTablesDB(SQLiteConnection connection)
+    {
+        string columnQuery = "";
+
+        //Vai colocando as Colunas Necessárias para ser criadas no BD
+        if (!ColumnExiste(connection, "nomeTabela", "nomeColuna"))
+        {
+            columnQuery = "ALTER TABLE nomeTabela ADD COLUMN nomeColuna TEXT;";
+
+            ExecuteQuery(columnQuery, connection);
+        }
+    }
+    */
+
+    private bool TableExists(SQLiteConnection connection, string tableName)
+    {
+        using (var command = new SQLiteCommand($"SELECT name FROM sqlite_master WHERE type='table' AND name='{tableName}';", connection))
+        {
+            return command.ExecuteScalar() != null;
+        }
+    }
+
+    private bool IndexExists(SQLiteConnection connection, string indexName)
+    {
+        using (var command = new SQLiteCommand($"SELECT name FROM sqlite_master WHERE type='index' AND name='{indexName}';", connection))
+        {
+            return command.ExecuteScalar() != null;
+        }
+    }
+
+    private bool ColumnExiste(SQLiteConnection connection, string tableName, string columnName)
+    {
+        using (var command = new SQLiteCommand($"PRAGMA table_info({tableName});", connection))
+        {
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    string coluna = reader["name"].ToString();
+                    if (coluna.Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true; // A coluna existe
+                    }
+                }
+            }
+        }
+        return false; // A coluna não existe
+    }
+
+    private void ExecuteQuery(string sqlQuery, SQLiteConnection connection)
+    {
+        using (var command = new SQLiteCommand(sqlQuery, connection))
         {
             command.ExecuteNonQuery();
         }

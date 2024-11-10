@@ -130,6 +130,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\Empresa.cs" />
     <Compile Include="Data\MigrationManager.cs" />
     <Compile Include="Data\PlanilhasBD.cs" />
     <Compile Include="Data\Resumo.cs" />

@@ -11,26 +11,51 @@ namespace ManutencaoPlanilhas.Data
         private string _connectionString = @"Data Source=" + Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "planilhas.db") + ";Version=3;";
 
 
-        public void ExecMigrations()
+        public bool ExecMigrations()
         {
             var migrationManager = new MigrationManager(_connectionString);
-            if (migrationManager.RunMigrations())
-                return;
+            return migrationManager.RunMigrations();
         }
-
-        public void CarregaDadosPlanilha(string filePath)
-        {
-            var DadosPlanilha = new Resumo(_connectionString);
-            DadosPlanilha.CarregaTabelaTemporaria(filePath);
-        }
-
-        public void CriaPlanilhaResumo(string filePath, string nomeEmpresa, int anoMov)
+                
+        public bool GeraPlanilhaResumo(string filePath, int codEmpresa, int anoMov, string tipo)
         {
             var resumo = new Resumo(_connectionString);
-            resumo.GeraPlanilhaResumo(filePath, nomeEmpresa, anoMov);
+            var result = false;
+
+            if (tipo == "S") //Resumo Sócios
+                result = resumo.GeraPlanilhaResumoSocios(filePath, codEmpresa, anoMov);
+
+            if (tipo == "A") //Resumo Acerto
+                result = resumo.GeraPlanilhaResumoAcerto(filePath, codEmpresa, anoMov);
+
+            return result;
         }
 
-        public Int16 SaveExcelToDatabase(string filePath, string tipo)
+        public bool CreateEmpresa(string nomeEmpresa)
+        {
+            try
+            {             
+                using (SQLiteConnection conn = new SQLiteConnection(_connectionString))
+                {
+                    conn.Open();
+                    string query = "INSERT INTO Empresa (NomeEmpresa) VALUES (@Nome)";
+                    using (SQLiteCommand cmd = new SQLiteCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Nome", nomeEmpresa.ToUpper());
+                        cmd.ExecuteNonQuery(); 
+                    }
+                }
+
+                return true; // Sucesso
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao salvar a empresa no banco de dados: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false; // Falha
+            }
+        }
+                
+        public int SaveExcelToDatabase(string filePath, string tipo, int empresaId)
         {
             try
             {
@@ -48,12 +73,15 @@ namespace ManutencaoPlanilhas.Data
                 using (SQLiteConnection conn = new SQLiteConnection(_connectionString))
                 {
                     conn.Open();
-                    string query = "INSERT INTO Planilhas (NomeArquivo, ArquivoBlob, DataInclusao, Tipo) VALUES (@Nome, @Arquivo, @Data, @Tipo)";
+                    string query = "INSERT INTO Planilhas (EmpresaId, NomeArquivo, ArquivoBlob, DataInclusao, Tipo) " +
+                                    "VALUES (@EmpresaId, @NomeArquivo, @ArquivoBlob, @DataInclusao, @Tipo)";
+                   
                     using (SQLiteCommand cmd = new SQLiteCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@Nome", Path.GetFileName(filePath));
-                        cmd.Parameters.AddWithValue("@Arquivo", fileBytes);
-                        cmd.Parameters.AddWithValue("@Data", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                        cmd.Parameters.AddWithValue("@EmpresaId", empresaId);
+                        cmd.Parameters.AddWithValue("@NomeArquivo", Path.GetFileName(filePath));
+                        cmd.Parameters.AddWithValue("@ArquivoBlob", fileBytes);
+                        cmd.Parameters.AddWithValue("@DataInclusao", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
                         cmd.Parameters.AddWithValue("@Tipo", tipo);
 
                         cmd.ExecuteNonQuery(); // Executa o comando de inserção
@@ -70,16 +98,18 @@ namespace ManutencaoPlanilhas.Data
             }
         }
 
-        public int RetrieveExcelFromDatabase(string tipo, string destinationPath)
+        public int RetrieveExcelFromDatabase(int EmpresaId, string tipo, string destinationPath)
         {
             try
             {
                 using (SQLiteConnection conn = new SQLiteConnection(_connectionString))
                 {
                     conn.Open();
-                    string query = "SELECT ArquivoBlob FROM Planilhas WHERE Tipo = @Tipo ORDER BY DataInclusao DESC LIMIT 1";
+                    string query = @"SELECT ArquivoBlob FROM Planilhas WHERE EmpresaId = @Empresa AND Tipo = @Tipo ORDER BY DataInclusao DESC LIMIT 1";
+
                     using (SQLiteCommand cmd = new SQLiteCommand(query, conn))
                     {
+                        cmd.Parameters.AddWithValue("@Empresa", EmpresaId);
                         cmd.Parameters.AddWithValue("@Tipo", tipo);
 
                         using (SQLiteDataReader reader = cmd.ExecuteReader())
@@ -201,6 +231,12 @@ namespace ManutencaoPlanilhas.Data
             }
         }
 
-        
+        public void CarregaDadosPlanilha(string filePath)
+        {
+            var DadosPlanilha = new Resumo(_connectionString);
+            DadosPlanilha.CarregaTabelaTemporaria(filePath);
+        }
+
+
     }
 }
