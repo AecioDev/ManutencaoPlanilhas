@@ -4,10 +4,8 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using Microsoft.Office.Interop.Excel;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
-using static OfficeOpenXml.ExcelErrorValue;
 
 namespace ManutencaoPlanilhas.Data
 {
@@ -88,10 +86,19 @@ namespace ManutencaoPlanilhas.Data
                 using (ExcelPackage pacote = new ExcelPackage())
                 {
                     // Loop para criar uma planilha para cada mês
-                    for (int mes = 1; mes <= 12; mes++)
+                    for (int mes = 1; mes <= 13; mes++)
                     {
-                        string nomeMes = new DateTime(AnoMov, mes, 1).ToString("MMMM"); // Nome do mês
-                        var nomePlanilha = CapitalizarPrimeiraLetra(nomeMes);
+                        string nomeMes = "";
+                        string nomePlanilha = "";
+
+                        if ( mes <= 12 ){
+                            nomeMes = new DateTime(AnoMov, mes, 1).ToString("MMMM"); // Nome do mês
+                            nomePlanilha = CapitalizarPrimeiraLetra(nomeMes);
+                        } else
+                        {
+                            nomePlanilha = "Resumo Anual";
+                        }
+                            
                         ExcelWorksheet planilha = pacote.Workbook.Worksheets.Add(nomePlanilha);
 
                         planilha.Cells["A1:G1"].Merge = true;
@@ -157,7 +164,7 @@ namespace ManutencaoPlanilhas.Data
 
                         linha = LinhaInicial;
                         
-                        // Cria dos Campos de Formulas do Resumo.
+                        // Cria os Campos de Formulas do Resumo.
                         foreach (string arquivoSocio in arquivos)
                         {
                             var nomeSocio = Path.GetFileNameWithoutExtension(arquivoSocio);
@@ -173,14 +180,27 @@ namespace ManutencaoPlanilhas.Data
                             planilha.Cells[linha, 1].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //Valor Total   B
-                            planilha.Cells[linha, 2].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[1].Trim();
+                            if (mes <= 12)
+                            {
+                                planilha.Cells[linha, 2].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[1].Trim();
+                            } else
+                            {                                
+                                planilha.Cells[linha, 2].Formula = "=" + GerarFormulaSomaMeses("B", linha);
+                            }
                             planilha.Cells[linha, 2].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 2].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 2].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 2].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //Recebimento   C
-                            planilha.Cells[linha, 3].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[2].Trim();
+                            if (mes <= 12)
+                            {
+                                planilha.Cells[linha, 3].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[2].Trim();
+                            }
+                            else
+                            {
+                                planilha.Cells[linha, 3].Formula = "=" + GerarFormulaSomaMeses("C", linha);
+                            }
                             planilha.Cells[linha, 3].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 3].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 3].Style.Border.Right.Style = ExcelBorderStyle.Thin;
@@ -194,21 +214,42 @@ namespace ManutencaoPlanilhas.Data
                             planilha.Cells[linha, 4].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //Mercadorias Pagas E
-                            planilha.Cells[linha, 5].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[3].Trim();
+                            if (mes <= 12)
+                            {
+                                planilha.Cells[linha, 5].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[3].Trim();
+                            }
+                            else
+                            {
+                                planilha.Cells[linha, 5].Formula = "=" + GerarFormulaSomaMeses("E", linha);
+                            }
                             planilha.Cells[linha, 5].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 5].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 5].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 5].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //Sócio Ganhou  F
-                            planilha.Cells[linha, 6].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[4].Trim();
+                            if (mes <= 12)
+                            {
+                                planilha.Cells[linha, 6].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[4].Trim();
+                            }
+                            else
+                            {
+                                planilha.Cells[linha, 6].Formula = "=" + GerarFormulaSomaMeses("F", linha);
+                            }
                             planilha.Cells[linha, 6].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 6].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 6].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 6].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //Firma Ganhou  G
-                            planilha.Cells[linha, 7].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[5].Trim();
+                            if (mes <= 12)
+                            {
+                                planilha.Cells[linha, 7].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[5].Trim();
+                            }
+                            else
+                            {
+                                planilha.Cells[linha, 7].Formula = "=" + GerarFormulaSomaMeses("G", linha);
+                            }
                             planilha.Cells[linha, 7].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 7].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 7].Style.Border.Right.Style = ExcelBorderStyle.Medium;
@@ -1074,7 +1115,17 @@ namespace ManutencaoPlanilhas.Data
 
             return true;
         }
-        
+
+        private string GerarFormulaSomaMeses(string coluna, int linha)
+        {
+            string[] meses = { "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                       "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro" };
+
+            // Exemplo de saída:
+            // "Janeiro!B5+Fevereiro!B5+Março!B5+...+Dezembro!B5"
+            return string.Join("+", meses.Select(mes => $"{mes}!{coluna}{linha}"));
+        }
+
         private int ObterMesPorNome(string nomeMes)
         {
             int mesNum = -1;

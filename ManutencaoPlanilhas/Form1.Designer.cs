@@ -46,6 +46,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.cb_Empresa = new System.Windows.Forms.ComboBox();
             this.Bt_CadastrarPlanilha = new System.Windows.Forms.Button();
+            this.bt_AlterarNomes = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -116,7 +117,7 @@
             // 
             // Bt_GerarPlanilha
             // 
-            this.Bt_GerarPlanilha.Location = new System.Drawing.Point(128, 214);
+            this.Bt_GerarPlanilha.Location = new System.Drawing.Point(71, 214);
             this.Bt_GerarPlanilha.Name = "Bt_GerarPlanilha";
             this.Bt_GerarPlanilha.Size = new System.Drawing.Size(88, 22);
             this.Bt_GerarPlanilha.TabIndex = 4;
@@ -160,19 +161,19 @@
             // 
             this.tb_MsgInfo.BackColor = System.Drawing.SystemColors.Control;
             this.tb_MsgInfo.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.tb_MsgInfo.Font = new System.Drawing.Font("Lato", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tb_MsgInfo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tb_MsgInfo.ForeColor = System.Drawing.SystemColors.MenuHighlight;
             this.tb_MsgInfo.Location = new System.Drawing.Point(12, 246);
             this.tb_MsgInfo.Name = "tb_MsgInfo";
             this.tb_MsgInfo.ReadOnly = true;
-            this.tb_MsgInfo.Size = new System.Drawing.Size(392, 15);
+            this.tb_MsgInfo.Size = new System.Drawing.Size(392, 14);
             this.tb_MsgInfo.TabIndex = 7;
             this.tb_MsgInfo.Text = "Bem Vindo!";
             this.tb_MsgInfo.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // Bt_GeraResumo
             // 
-            this.Bt_GeraResumo.Location = new System.Drawing.Point(222, 214);
+            this.Bt_GeraResumo.Location = new System.Drawing.Point(165, 214);
             this.Bt_GeraResumo.Name = "Bt_GeraResumo";
             this.Bt_GeraResumo.Size = new System.Drawing.Size(88, 22);
             this.Bt_GeraResumo.TabIndex = 4;
@@ -229,6 +230,16 @@
             this.Bt_CadastrarPlanilha.MouseEnter += new System.EventHandler(this.Bt_CadastrarPlanilha_MouseEnter);
             this.Bt_CadastrarPlanilha.MouseLeave += new System.EventHandler(this.Bt_CadastrarPlanilha_MouseLeave);
             // 
+            // bt_AlterarNomes
+            // 
+            this.bt_AlterarNomes.Location = new System.Drawing.Point(259, 214);
+            this.bt_AlterarNomes.Name = "bt_AlterarNomes";
+            this.bt_AlterarNomes.Size = new System.Drawing.Size(88, 22);
+            this.bt_AlterarNomes.TabIndex = 4;
+            this.bt_AlterarNomes.Text = "Alterar Nomes";
+            this.bt_AlterarNomes.UseVisualStyleBackColor = true;
+            this.bt_AlterarNomes.Click += new System.EventHandler(this.bt_AlterarNomes_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -238,6 +249,7 @@
             this.Controls.Add(this.cb_Empresa);
             this.Controls.Add(this.tb_MsgInfo);
             this.Controls.Add(this.lb_Info);
+            this.Controls.Add(this.bt_AlterarNomes);
             this.Controls.Add(this.Bt_GeraResumo);
             this.Controls.Add(this.Bt_GerarPlanilha);
             this.Controls.Add(this.groupBox1);
@@ -282,6 +294,7 @@
         private System.Windows.Forms.ComboBox cb_Empresa;
         private System.Windows.Forms.Button Bt_CadastrarPlanilha;
         public System.Windows.Forms.TextBox tb_MsgInfo;
+        private System.Windows.Forms.Button bt_AlterarNomes;
     }
 }
 
