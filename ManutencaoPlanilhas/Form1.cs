@@ -23,20 +23,38 @@ namespace ManutencaoPlanilhas
             if (!dbOk) { this.Close(); }
 
             Rb_Socios.Checked = true;   
-            //tb_Ano.Text = DateTime.Now.Year.ToString();
+            tb_Ano.Text = DateTime.Now.Year.ToString();
             CarregarComboBoxEmpresas();
+        }
+
+        private int ObterEmpresaIdSelecionada()
+        {
+            if (cb_Empresa.SelectedValue != null && int.TryParse(cb_Empresa.SelectedValue.ToString(), out int id))
+            {
+                return id;
+            }
+            return 0;
+        }
+
+        private void cb_Empresa_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            int empresaId = ObterEmpresaIdSelecionada();
+            if (Rb_Socios.Checked)
+                DefinePatchDefault(empresaId, "S");
+            else
+                DefinePatchDefault(empresaId, "A");
         }
 
         private void rb_Socios_CheckedChanged(object sender, EventArgs e)
         {
             if(Rb_Socios.Checked)
-                DefinePatchDefault("S");
+                DefinePatchDefault(ObterEmpresaIdSelecionada(), "S");
         }
 
         private void rb_Acerto_CheckedChanged(object sender, EventArgs e)
         {
             if (Rb_Acerto.Checked)
-                DefinePatchDefault("A");
+                DefinePatchDefault(ObterEmpresaIdSelecionada(), "A");
         }
 
         private void bt_Pasta_Click(object sender, EventArgs e)
@@ -57,10 +75,17 @@ namespace ManutencaoPlanilhas
 
             if (selecionou && MessageBox.Show("Deseja Salvar este Caminho?", "Atenção!", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
+                int empresaId = ObterEmpresaIdSelecionada();
+                if (empresaId == 0)
+                {
+                    MessageBox.Show("Selecione uma Empresa antes de salvar o caminho!", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 if (Directory.Exists(tb_PastaRaiz.Text))
                 {
                     PlanilhasBD config = new PlanilhasBD();
-                    var keyConfig = Rb_Socios.Checked ? "DefaultPatchSocio" : "DefaultPatchAcerto";
+                    var keyConfig = Rb_Socios.Checked ? $"DefaultPatchSocio_{empresaId}" : $"DefaultPatchAcerto_{empresaId}";
                     config.SaveConfig(keyConfig, tb_PastaRaiz.Text);                    
                 } 
                 else
@@ -210,8 +235,12 @@ namespace ManutencaoPlanilhas
             }
         }
 
-        private void DefinePatchDefault(string tipo)
+        private void DefinePatchDefault(int empresa, string tipo)
         {
+            tb_PastaRaiz.Text = "";
+
+            if (empresa == 0) return;
+
             // Define o caminho para a pasta Data na raiz do sistema
             string folderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
 
@@ -222,12 +251,12 @@ namespace ManutencaoPlanilhas
             if (File.Exists(filePath))
             {
                 PlanilhasBD config = new PlanilhasBD();
-                var keyConfig = tipo == "S" ? "DefaultPatchSocio" : "DefaultPatchAcerto";
-                tb_PastaRaiz.Text = config.GetConfig(keyConfig);
+                var keyConfig = tipo == "S" ? $"DefaultPatchSocio_{empresa}" : $"DefaultPatchAcerto_{empresa}";
+                tb_PastaRaiz.Text = config.GetConfig(keyConfig) ?? "";
             }
 
         }
-                
+
         private void CarregarComboBoxEmpresas()
         {
             EmpresaDB dadosEmp = new EmpresaDB();

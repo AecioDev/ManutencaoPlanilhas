@@ -217,6 +217,7 @@
             this.cb_Empresa.Name = "cb_Empresa";
             this.cb_Empresa.Size = new System.Drawing.Size(214, 21);
             this.cb_Empresa.TabIndex = 10;
+            this.cb_Empresa.SelectedIndexChanged += new System.EventHandler(this.cb_Empresa_SelectedIndexChanged);
             // 
             // Bt_CadastrarPlanilha
             // 

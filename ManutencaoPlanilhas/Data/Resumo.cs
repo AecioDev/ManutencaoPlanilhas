@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data.SQLite;
 using System.Drawing;
 using System.IO;
@@ -57,6 +57,13 @@ namespace ManutencaoPlanilhas.Data
                     }
                 }
             }
+
+            // Fallback para valores padrão caso não estejam informados no banco
+            if (string.IsNullOrWhiteSpace(posicoes[1])) posicoes[1] = "$B$12"; // cellValorTotal
+            if (string.IsNullOrWhiteSpace(posicoes[2])) posicoes[2] = "$D$11"; // cellRecebimento
+            if (string.IsNullOrWhiteSpace(posicoes[3])) posicoes[3] = "$F$6";  // cellMercPagas
+            if (string.IsNullOrWhiteSpace(posicoes[4])) posicoes[4] = "$E$20"; // cellValSocio
+            if (string.IsNullOrWhiteSpace(posicoes[5])) posicoes[5] = "$E$19"; // cellValFirma
 
             return posicoes;
         }
@@ -182,10 +189,10 @@ namespace ManutencaoPlanilhas.Data
                             //Valor Total   B
                             if (mes <= 12)
                             {
-                                planilha.Cells[linha, 2].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[1].Trim();
+                                planilha.Cells[linha, 2].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[1].Trim();
                             } else
                             {                                
-                                planilha.Cells[linha, 2].Formula = "=" + GerarFormulaSomaMeses("B", linha);
+                                planilha.Cells[linha, 2].Formula = GerarFormulaSomaMeses("B", linha);
                             }
                             planilha.Cells[linha, 2].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 2].Style.Border.Left.Style = ExcelBorderStyle.Thin;
@@ -195,11 +202,11 @@ namespace ManutencaoPlanilhas.Data
                             //Recebimento   C
                             if (mes <= 12)
                             {
-                                planilha.Cells[linha, 3].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[2].Trim();
+                                planilha.Cells[linha, 3].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[2].Trim();
                             }
                             else
                             {
-                                planilha.Cells[linha, 3].Formula = "=" + GerarFormulaSomaMeses("C", linha);
+                                planilha.Cells[linha, 3].Formula = GerarFormulaSomaMeses("C", linha);
                             }
                             planilha.Cells[linha, 3].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 3].Style.Border.Left.Style = ExcelBorderStyle.Thin;
@@ -207,7 +214,7 @@ namespace ManutencaoPlanilhas.Data
                             planilha.Cells[linha, 3].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //Percentual    D
-                            planilha.Cells[linha, 4].Formula = "=IF(B" + linha.ToString() + " > 0, C" + linha.ToString() + " / B" + linha.ToString() + ", 0)";
+                            planilha.Cells[linha, 4].Formula = "IF(B" + linha.ToString() + " > 0, C" + linha.ToString() + " / B" + linha.ToString() + ", 0)";
                             planilha.Cells[linha, 4].Style.Numberformat.Format = "0.00%";
                             planilha.Cells[linha, 4].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 4].Style.Border.Right.Style = ExcelBorderStyle.Thin;
@@ -216,11 +223,11 @@ namespace ManutencaoPlanilhas.Data
                             //Mercadorias Pagas E
                             if (mes <= 12)
                             {
-                                planilha.Cells[linha, 5].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[3].Trim();
+                                planilha.Cells[linha, 5].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[3].Trim();
                             }
                             else
                             {
-                                planilha.Cells[linha, 5].Formula = "=" + GerarFormulaSomaMeses("E", linha);
+                                planilha.Cells[linha, 5].Formula = GerarFormulaSomaMeses("E", linha);
                             }
                             planilha.Cells[linha, 5].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 5].Style.Border.Left.Style = ExcelBorderStyle.Thin;
@@ -230,11 +237,11 @@ namespace ManutencaoPlanilhas.Data
                             //Sócio Ganhou  F
                             if (mes <= 12)
                             {
-                                planilha.Cells[linha, 6].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[4].Trim();
+                                planilha.Cells[linha, 6].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[4].Trim();
                             }
                             else
                             {
-                                planilha.Cells[linha, 6].Formula = "=" + GerarFormulaSomaMeses("F", linha);
+                                planilha.Cells[linha, 6].Formula = GerarFormulaSomaMeses("F", linha);
                             }
                             planilha.Cells[linha, 6].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 6].Style.Border.Left.Style = ExcelBorderStyle.Thin;
@@ -244,11 +251,11 @@ namespace ManutencaoPlanilhas.Data
                             //Firma Ganhou  G
                             if (mes <= 12)
                             {
-                                planilha.Cells[linha, 7].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[5].Trim();
+                                planilha.Cells[linha, 7].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!" + cellValores[5].Trim();
                             }
                             else
                             {
-                                planilha.Cells[linha, 7].Formula = "=" + GerarFormulaSomaMeses("G", linha);
+                                planilha.Cells[linha, 7].Formula = GerarFormulaSomaMeses("G", linha);
                             }
                             planilha.Cells[linha, 7].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 7].Style.Border.Left.Style = ExcelBorderStyle.Thin;
@@ -275,7 +282,7 @@ namespace ManutencaoPlanilhas.Data
                             }
                             else
                             {
-                                planilha.Cells[LinhaTotal, coluna].Formula = "=IF(B" + LinhaTotal.ToString() + " > 0, C" + LinhaTotal.ToString() + " / B" + LinhaTotal.ToString() + ", 0)";
+                                planilha.Cells[LinhaTotal, coluna].Formula = "IF(B" + LinhaTotal.ToString() + " > 0, C" + LinhaTotal.ToString() + " / B" + LinhaTotal.ToString() + ", 0)";
                                 planilha.Cells[LinhaTotal, coluna].Style.Numberformat.Format = "0.00%";
                             }
                         }
@@ -517,21 +524,21 @@ namespace ManutencaoPlanilhas.Data
                             planilha.Cells[linha, 1].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //COBRANÇA  B
-                            planilha.Cells[linha, 2].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$4";
+                            planilha.Cells[linha, 2].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$4";
                             planilha.Cells[linha, 2].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 2].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 2].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 2].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //QTD NOTAS C
-                            planilha.Cells[linha, 3].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$E$4";
+                            planilha.Cells[linha, 3].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$E$4";
                             planilha.Cells[linha, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                             planilha.Cells[linha, 3].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 3].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 3].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //RECEBIMENTO   D
-                            planilha.Cells[linha, 4].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$6";
+                            planilha.Cells[linha, 4].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$6";
                             planilha.Cells[linha, 4].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 4].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 4].Style.Border.Right.Style = ExcelBorderStyle.Thin;
@@ -548,56 +555,56 @@ namespace ManutencaoPlanilhas.Data
                             /***** DESPESAS *****/
 
                             //COMBUSTÍVEL   F
-                            planilha.Cells[linha, 6].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$9";
+                            planilha.Cells[linha, 6].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$9";
                             planilha.Cells[linha, 6].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 6].Style.Border.Left.Style = ExcelBorderStyle.Medium;
                             planilha.Cells[linha, 6].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 6].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //REFEIÇÃO      G
-                            planilha.Cells[linha, 7].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$10";
+                            planilha.Cells[linha, 7].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$10";
                             planilha.Cells[linha, 7].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 7].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 7].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 7].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //HOTEL         H
-                            planilha.Cells[linha, 8].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$11";
+                            planilha.Cells[linha, 8].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$11";
                             planilha.Cells[linha, 8].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 8].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 8].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //LAVA JATO     I
-                            planilha.Cells[linha, 9].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$12";
+                            planilha.Cells[linha, 9].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$12";
                             planilha.Cells[linha, 9].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 9].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 9].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 9].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //OFICINA       J
-                            planilha.Cells[linha, 10].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$13";
+                            planilha.Cells[linha, 10].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$13";
                             planilha.Cells[linha, 10].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 10].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 10].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 10].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //FICHAS        K
-                            planilha.Cells[linha, 11].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$14";
+                            planilha.Cells[linha, 11].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$14";
                             planilha.Cells[linha, 11].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 11].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 11].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 11].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //VALE          L
-                            planilha.Cells[linha, 12].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$16";
+                            planilha.Cells[linha, 12].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$16";
                             planilha.Cells[linha, 12].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 12].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 12].Style.Border.Right.Style = ExcelBorderStyle.Medium;
                             planilha.Cells[linha, 12].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //VALE AJUDANTE M
-                            planilha.Cells[linha, 13].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$15";
+                            planilha.Cells[linha, 13].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$15";
                             planilha.Cells[linha, 13].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 13].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 13].Style.Border.Right.Style = ExcelBorderStyle.Thin;
@@ -623,28 +630,28 @@ namespace ManutencaoPlanilhas.Data
                             planilha.Cells[linha, 15].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //PIX               P
-                            planilha.Cells[linha, 16].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$21";
+                            planilha.Cells[linha, 16].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$21";
                             planilha.Cells[linha, 16].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 16].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 16].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 16].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //DEPÓSITO          Q
-                            planilha.Cells[linha, 17].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$22";
+                            planilha.Cells[linha, 17].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$22";
                             planilha.Cells[linha, 17].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 17].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 17].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 17].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //DINHEIRO          R
-                            planilha.Cells[linha, 18].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$23";
+                            planilha.Cells[linha, 18].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$23";
                             planilha.Cells[linha, 18].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 18].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 18].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 18].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
                             //CHEQUE            S
-                            planilha.Cells[linha, 19].Formula = "='" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$24";
+                            planilha.Cells[linha, 19].Formula = "'" + caminhoPlanilhas + @"\[" + nomeArquivo + "]" + nomePlanilha + "'!$C$24";
                             planilha.Cells[linha, 19].Style.Numberformat.Format = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * \"-\"??_-;_-@";
                             planilha.Cells[linha, 19].Style.Border.Left.Style = ExcelBorderStyle.Thin;
                             planilha.Cells[linha, 19].Style.Border.Right.Style = ExcelBorderStyle.Thin;
@@ -1355,3 +1362,4 @@ namespace ManutencaoPlanilhas.Data
         }
     }
 }
+
