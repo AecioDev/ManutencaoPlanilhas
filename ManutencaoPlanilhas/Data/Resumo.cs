@@ -1,6 +1,7 @@
 using System;
 using System.Data.SQLite;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -11,6 +12,7 @@ namespace ManutencaoPlanilhas.Data
 {
     public class Resumo
     {
+        private static readonly CultureInfo PtBR = new CultureInfo("pt-BR");
         //Processo para gerar a Planilha de Resumo das Planilhas Filhas
         //
         // 1 - Ler os dados das planilhas Filhas
@@ -83,7 +85,12 @@ namespace ManutencaoPlanilhas.Data
             }
 
             string[] arquivos = Directory.GetFiles(caminhoPlanilhas, "*.xlsx")
-                             .Where(arquivo => !Path.GetFileName(arquivo).StartsWith("~"))
+                             .Where(arquivo =>
+                             {
+                                 string nome = Path.GetFileName(arquivo);
+                                 return !nome.StartsWith("~") &&
+                                        !nome.StartsWith("#_RESUMO", StringComparison.OrdinalIgnoreCase);
+                             })
                              .ToArray();
 
             if (arquivos.Length > 0)
@@ -98,10 +105,12 @@ namespace ManutencaoPlanilhas.Data
                         string nomeMes = "";
                         string nomePlanilha = "";
 
-                        if ( mes <= 12 ){
-                            nomeMes = new DateTime(AnoMov, mes, 1).ToString("MMMM"); // Nome do mês
+                        if (mes <= 12)
+                        {
+                            nomeMes = new DateTime(AnoMov, mes, 1).ToString("MMMM", PtBR); // Nome do mês em pt-BR
                             nomePlanilha = CapitalizarPrimeiraLetra(nomeMes);
-                        } else
+                        }
+                        else
                         {
                             nomePlanilha = "Resumo Anual";
                         }
@@ -297,8 +306,6 @@ namespace ManutencaoPlanilhas.Data
                     // Salva o arquivo Excel no caminho especificado
                     FileInfo arquivoInfo = new FileInfo(caminhoArquivo);
                     pacote.SaveAs(arquivoInfo);
-
-                    MessageBox.Show("Planilha de Resumo criada com sucesso.");
                 }
 
                 return true;
@@ -322,15 +329,22 @@ namespace ManutencaoPlanilhas.Data
             int LinhaFinal;
             int LinhaTotal;
 
+            bool algumMesGerado = false;
+
             // Loop para percorrer os Meses do Ano
             for (int mes = 1; mes <= 12; mes++)
             {
-                var nomeMes = new DateTime(AnoMov, mes, 1).ToString("MMMM"); // Nome do mês
+                var nomeMes = new DateTime(AnoMov, mes, 1).ToString("MMMM", PtBR); // Nome do mês em pt-BR
                 var mesChar = mes < 10 ? "0" + mes.ToString() : mes.ToString();
-                var nomePasta = mesChar + " - " + nomeMes.ToUpper(); //01 - JANEIRO 
-                var caminhoPlanilhas = caminhoPastas + @"\" + nomePasta;
+                var nomePasta = mesChar + " - " + nomeMes.ToUpper(PtBR); //01 - JANEIRO
+                var caminhoPlanilhas = Path.Combine(caminhoPastas, nomePasta);
 
-                var caminhoArquivo = caminhoPlanilhas + @"\#_RESUMO_ACERTO_SEMANAL_" + nomeMes.ToUpper() + "_" + AnoMov.ToString() + ".xlsx";
+                if (!Directory.Exists(caminhoPlanilhas))
+                {
+                    continue;
+                }
+
+                var caminhoArquivo = Path.Combine(caminhoPlanilhas, "#_RESUMO_ACERTO_SEMANAL_" + nomeMes.ToUpper(PtBR) + "_" + AnoMov.ToString() + ".xlsx");
 
                 if (File.Exists(caminhoArquivo))
                 {
@@ -338,14 +352,20 @@ namespace ManutencaoPlanilhas.Data
                 }
 
                 string[] arquivos = Directory.GetFiles(caminhoPlanilhas, "*.xlsx")
-                                 .Where(arquivo => !Path.GetFileName(arquivo).StartsWith("~"))
+                                 .Where(arquivo =>
+                                 {
+                                     string nome = Path.GetFileName(arquivo);
+                                     return !nome.StartsWith("~") &&
+                                            !nome.StartsWith("#_RESUMO", StringComparison.OrdinalIgnoreCase);
+                                 })
                                  .ToArray();
 
                 if (arquivos.Length <= 0)
                 {
-                    MessageBox.Show("Não Existem Planilhas de Sócios para gerar um Resumo!!!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return false;
+                    continue;
                 }
+
+                algumMesGerado = true;
 
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
@@ -1120,6 +1140,12 @@ namespace ManutencaoPlanilhas.Data
 
             } //For Meses do Ano
 
+            if (!algumMesGerado)
+            {
+                MessageBox.Show("Não foram encontradas planilhas de Acerto Semanal nas pastas mensais para gerar o Resumo!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
             return true;
         }
 
@@ -1217,25 +1243,25 @@ namespace ManutencaoPlanilhas.Data
                         }
 
                         // Extrai dados das células da planilha
-                        int ano = Convert.ToInt32(worksheet.Cells["J2"].Value);
+                        int ano = ToIntSafe(worksheet.Cells["J2"].Value);
                         string socio = worksheet.Cells["B2"].Text;
-                        int qntMercEntregues = Convert.ToInt32(worksheet.Cells["C6"].Value);
-                        decimal valTotEntregues = Convert.ToDecimal(worksheet.Cells["D6"].Value);
-                        decimal valTotDevolvidas = Convert.ToDecimal(worksheet.Cells["E6"].Value);
-                        decimal valTotVendidas = Convert.ToDecimal(worksheet.Cells["F6"].Value); /*valTotEntregues - valTotDevolvidas*/
-                        int qntTotFichas = Convert.ToInt32(worksheet.Cells["B11"].Value);
-                        decimal valTotFichas = Convert.ToDecimal(worksheet.Cells["B12"].Value);
-                        decimal valTotReceitas = Convert.ToDecimal(worksheet.Cells["D11"].Value);
-                        decimal valTotDespesas = Convert.ToDecimal(worksheet.Cells["D12"].Value);
-                        decimal valTotSaldo = Convert.ToDecimal(worksheet.Cells["D13"].Value);   /*valTotReceitas - valTotDespesas*/
-                        decimal indiceParteFirma = Convert.ToDecimal(worksheet.Cells["D19"].Value);
-                        decimal indiceParteSocio = Convert.ToDecimal(worksheet.Cells["D20"].Value);
-                        decimal valParteFirma = Convert.ToDecimal(worksheet.Cells["E19"].Value);
-                        decimal valParteSocio = Convert.ToDecimal(worksheet.Cells["E20"].Value);
-                        decimal valMercEntregues = Convert.ToDecimal(worksheet.Cells["J7"].Value);
-                        decimal valMercNaoEntregues = Convert.ToDecimal(worksheet.Cells["J9"].Value);
-                        decimal valMercRetSalao = Convert.ToDecimal(worksheet.Cells["J11"].Value);
-                        decimal ValMercDevolvidas = Convert.ToDecimal(worksheet.Cells["J13"].Value); /*valMercEntregues + valMercNaoEntregues - valMercRetSalao*/
+                        int qntMercEntregues = ToIntSafe(worksheet.Cells["C6"].Value);
+                        decimal valTotEntregues = ToDecimalSafe(worksheet.Cells["D6"].Value);
+                        decimal valTotDevolvidas = ToDecimalSafe(worksheet.Cells["E6"].Value);
+                        decimal valTotVendidas = ToDecimalSafe(worksheet.Cells["F6"].Value);
+                        int qntTotFichas = ToIntSafe(worksheet.Cells["B11"].Value);
+                        decimal valTotFichas = ToDecimalSafe(worksheet.Cells["B12"].Value);
+                        decimal valTotReceitas = ToDecimalSafe(worksheet.Cells["D11"].Value);
+                        decimal valTotDespesas = ToDecimalSafe(worksheet.Cells["D12"].Value);
+                        decimal valTotSaldo = ToDecimalSafe(worksheet.Cells["D13"].Value);
+                        decimal indiceParteFirma = ToDecimalSafe(worksheet.Cells["D19"].Value);
+                        decimal indiceParteSocio = ToDecimalSafe(worksheet.Cells["D20"].Value);
+                        decimal valParteFirma = ToDecimalSafe(worksheet.Cells["E19"].Value);
+                        decimal valParteSocio = ToDecimalSafe(worksheet.Cells["E20"].Value);
+                        decimal valMercEntregues = ToDecimalSafe(worksheet.Cells["J7"].Value);
+                        decimal valMercNaoEntregues = ToDecimalSafe(worksheet.Cells["J9"].Value);
+                        decimal valMercRetSalao = ToDecimalSafe(worksheet.Cells["J11"].Value);
+                        decimal ValMercDevolvidas = ToDecimalSafe(worksheet.Cells["J13"].Value);
                         string obsAcerto = worksheet.Cells["C24"].Text;
 
                         using (var connection = new SQLiteConnection(_connectionString))
@@ -1317,7 +1343,7 @@ namespace ManutencaoPlanilhas.Data
                                 cellValor = "B" + i.ToString();
 
                                 despesaDescricao = worksheet.Cells[cellDescricao].Text;
-                                despesaValor = Convert.ToDecimal(worksheet.Cells[cellValor].Value);
+                                despesaValor = ToDecimalSafe(worksheet.Cells[cellValor].Value);
 
 
                                 if (despesaValor > 0)
@@ -1348,8 +1374,6 @@ namespace ManutencaoPlanilhas.Data
 
                     } //foreach meses
 
-                    package.Dispose();
-
                     MessageBox.Show("Dados da planilha salvos com sucesso.");
                     return true;
                 }
@@ -1359,6 +1383,20 @@ namespace ManutencaoPlanilhas.Data
                 MessageBox.Show($"Erro ao salvar dados da planilha: {ex.Message}");
                 return false;
             }
+        }
+
+        private static int ToIntSafe(object val)
+        {
+            if (val == null || val == DBNull.Value) return 0;
+            try { return Convert.ToInt32(val, CultureInfo.InvariantCulture); }
+            catch { return 0; }
+        }
+
+        private static decimal ToDecimalSafe(object val)
+        {
+            if (val == null || val == DBNull.Value) return 0m;
+            try { return Convert.ToDecimal(val, CultureInfo.InvariantCulture); }
+            catch { return 0m; }
         }
     }
 }

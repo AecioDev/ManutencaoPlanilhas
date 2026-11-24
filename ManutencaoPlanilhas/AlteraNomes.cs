@@ -1,6 +1,6 @@
-﻿using ManutencaoPlanilhas.Data;
+using ManutencaoPlanilhas.Data;
 using System;
-using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -9,24 +9,27 @@ namespace ManutencaoPlanilhas
 {
     public partial class AlteraNomes : Form
     {
+        private static readonly CultureInfo PtBR = new CultureInfo("pt-BR");
+
         private string CaminhoPlanilhas;
         private string CaminhoPastas;
         private string TipoPlanilha;
+
         public AlteraNomes(string _caminhoPlanilhas, string _tipoPlanilha)
         {
             InitializeComponent();
             this.CaminhoPlanilhas = _caminhoPlanilhas;
             this.TipoPlanilha = _tipoPlanilha;
-            this.CaminhoPastas = CaminhoPlanilhas;
+            this.CaminhoPastas = _caminhoPlanilhas;
         }
 
         private void AlteraNomes_Load(object sender, EventArgs e)
         {
             try
             {
-                if(TipoPlanilha == "A")
+                if (TipoPlanilha == "A")
                 {
-                    CaminhoPlanilhas = CaminhoPlanilhas + @"\01 - JANEIRO";
+                    CaminhoPlanilhas = Path.Combine(CaminhoPlanilhas, "01 - JANEIRO");
                 }
 
                 if (!Directory.Exists(CaminhoPlanilhas))
@@ -35,11 +38,13 @@ namespace ManutencaoPlanilhas
                     return;
                 }
 
-                // Obtém os arquivos com extensão .xlsx e .xls
                 var arquivosExcel = Directory.GetFiles(CaminhoPlanilhas, "*.xls*")
                                              .Where(arquivo =>
-                                                 !Path.GetFileName(arquivo).StartsWith("~") &&
-                                                 !Path.GetFileName(arquivo).StartsWith("#_RESUMO"))
+                                             {
+                                                 string nome = Path.GetFileName(arquivo);
+                                                 return !nome.StartsWith("~") &&
+                                                        !nome.StartsWith("#_RESUMO", StringComparison.OrdinalIgnoreCase);
+                                             })
                                              .Select(arquivo => new
                                              {
                                                  Nome = Path.GetFileNameWithoutExtension(arquivo),
@@ -47,33 +52,27 @@ namespace ManutencaoPlanilhas
                                              })
                                              .ToList();
 
-                // Configura o DataGridView para permitir edição e inclusão de linhas
-                gridNomes.AllowUserToAddRows = true;  // Permite adicionar novas linhas
-                gridNomes.AllowUserToDeleteRows = true; // Permite excluir linhas
-                gridNomes.EditMode = DataGridViewEditMode.EditOnEnter; // Permite edição ao entrar na célula
+                gridNomes.AllowUserToAddRows = false;
+                gridNomes.AllowUserToDeleteRows = false;
+                gridNomes.EditMode = DataGridViewEditMode.EditOnEnter;
 
-                // Configuração das colunas manualmente
-                gridNomes.Columns.Clear(); // Limpa colunas anteriores
-                gridNomes.ColumnCount = 2; // Define duas colunas
+                gridNomes.Columns.Clear();
+                gridNomes.ColumnCount = 2;
 
-                // Configuração da coluna Nome (editável)
                 gridNomes.Columns[0].Name = "nome";
                 gridNomes.Columns[0].HeaderText = "Nome";
                 gridNomes.Columns[0].Width = 200;
-                gridNomes.Columns[0].ReadOnly = false; // Permite edição
+                gridNomes.Columns[0].ReadOnly = false;
 
-                // Configuração da coluna Caminho (não editável)
                 gridNomes.Columns[1].Name = "caminho";
                 gridNomes.Columns[1].HeaderText = "Caminho Original";
                 gridNomes.Columns[1].Width = 400;
-                gridNomes.Columns[1].ReadOnly = true; // Caminho original não pode ser alterado pelo usuário
+                gridNomes.Columns[1].ReadOnly = true;
 
-                // Adiciona os arquivos na tabela
                 foreach (var arquivo in arquivosExcel)
                 {
                     gridNomes.Rows.Add(arquivo.Nome, arquivo.Caminho);
                 }
-
             }
             catch (Exception ex)
             {
@@ -86,125 +85,139 @@ namespace ManutencaoPlanilhas
             lb_info.Visible = true;
             bt_AlterarNomes.Enabled = false;
 
-            if (TipoPlanilha == "S") //Planilhas de Sócios
+            try
             {
-                PlanilhasSocios();
+                int alterados = TipoPlanilha == "S" ? PlanilhasSocios() : PlanilhasAcertos();
+
+                lb_info.Text = "Feito!";
+                if (alterados > 0)
+                {
+                    MessageBox.Show($"{alterados} planilha(s) renomeada(s) com sucesso!", "Feito!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Nenhum nome foi alterado.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
-            else
+            finally
             {
-                PlanilhasAcertos();
+                bt_AlterarNomes.Enabled = true;
             }
-
-            lb_info.Text = "Feito!!!";
-
-            MessageBox.Show("Nomes Alterados com Sucesso!!!", "Feito!", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            this.Close();
         }
 
-        private void PlanilhasSocios()
+        private int PlanilhasSocios()
         {
             Planilhas plan = new Planilhas();
+            int alterados = 0;
 
             foreach (DataGridViewRow row in gridNomes.Rows)
             {
-                if (row.Cells[0].Value != null && row.Cells[1].Value != null)
+                if (row.IsNewRow || row.Cells[0].Value == null || row.Cells[1].Value == null)
+                    continue;
+
+                string nomeDigitado = row.Cells[0].Value.ToString().Trim().ToUpper();
+                string caminhoOriginal = row.Cells[1].Value.ToString().Trim();
+
+                if (string.IsNullOrWhiteSpace(nomeDigitado) || !File.Exists(caminhoOriginal))
+                    continue;
+
+                string nomeOriginal = Path.GetFileNameWithoutExtension(caminhoOriginal).ToUpper();
+                if (nomeDigitado == nomeOriginal)
+                    continue;
+
+                lb_info.Text = "Alterando " + nomeDigitado + "...";
+                Application.DoEvents();
+
+                string pasta = Path.GetDirectoryName(caminhoOriginal);
+                string extensao = Path.GetExtension(caminhoOriginal);
+                string novoCaminho = Path.Combine(pasta, nomeDigitado + extensao);
+
+                try
                 {
-                    string nomeDigitado = row.Cells[0].Value.ToString().Trim(); // Novo nome sem extensão
-                    string caminhoOriginal = row.Cells[1].Value.ToString().Trim(); // Caminho do arquivo original
-
-                    lb_info.Text = "Alterando " + nomeDigitado + "...";
-
-                    if (!string.IsNullOrWhiteSpace(nomeDigitado) && File.Exists(caminhoOriginal))
+                    if (File.Exists(novoCaminho))
                     {
-                        string nomeOriginal = Path.GetFileNameWithoutExtension(caminhoOriginal);
+                        MessageBox.Show($"Já existe um arquivo chamado '{Path.GetFileName(novoCaminho)}'. Alteração ignorada.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        continue;
+                    }
 
-                        nomeOriginal = nomeOriginal.ToUpper();
-                        nomeDigitado = nomeDigitado.ToUpper();
+                    File.Move(caminhoOriginal, novoCaminho);
+                    row.Cells[1].Value = novoCaminho;
 
-                        if (nomeDigitado != nomeOriginal)
-                        {
-                            string pasta = Path.GetDirectoryName(caminhoOriginal); // Obtém a pasta do arquivo original
-                            string extensao = Path.GetExtension(caminhoOriginal);  // Obtém a extensão original
-
-                            string novoCaminho = Path.Combine(pasta, nomeDigitado + extensao); // Cria o novo caminho
-
-                            try
-                            {
-                                if (!File.Exists(novoCaminho)) // Evita sobrescrever arquivos
-                                {
-                                    File.Move(caminhoOriginal, novoCaminho); // Renomeia o arquivo
-                                    row.Cells[1].Value = novoCaminho; // Atualiza o caminho na grid
-                                }
-
-                                plan.AlteraNomeDoSocio(novoCaminho, nomeDigitado, "", "S", 0);
-                            }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show($"Erro ao renomear o arquivo: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            }
-                        }
+                    if (plan.AlteraNomeDoSocio(novoCaminho, nomeDigitado, "", "S", 0))
+                    {
+                        alterados++;
                     }
                 }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Erro ao renomear o arquivo: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
+
+            return alterados;
         }
 
-        private void PlanilhasAcertos()
+        private int PlanilhasAcertos()
         {
             Planilhas plan = new Planilhas();
+            int anoMov = DateTime.Now.Year;
+            int alterados = 0;
 
-            var AnoMov = DateTime.Now.Year;
-
-            // Loop para percorrer os Meses do Ano
             for (int mes = 1; mes <= 12; mes++)
             {
-                var nomeMes = new DateTime(AnoMov, mes, 1).ToString("MMMM"); // Nome do mês
-                var mesChar = mes < 10 ? "0" + mes.ToString() : mes.ToString();
-                var nomePasta = mesChar + " - " + nomeMes.ToUpper(); //01 - JANEIRO 
-                var caminhoPlanilhas = CaminhoPastas + @"\" + nomePasta;
+                string nomeMes = new DateTime(anoMov, mes, 1).ToString("MMMM", PtBR);
+                string mesChar = mes < 10 ? "0" + mes : mes.ToString();
+                string nomePasta = mesChar + " - " + nomeMes.ToUpper(PtBR);
+                string caminhoPastaMes = Path.Combine(CaminhoPastas, nomePasta);
+
+                if (!Directory.Exists(caminhoPastaMes))
+                    continue;
 
                 foreach (DataGridViewRow row in gridNomes.Rows)
                 {
-                    if (row.Cells[0].Value != null && row.Cells[1].Value != null)
+                    if (row.IsNewRow || row.Cells[0].Value == null || row.Cells[1].Value == null)
+                        continue;
+
+                    string nomeDigitado = row.Cells[0].Value.ToString().Trim().ToUpper();
+                    string caminhoOriginal = Path.Combine(caminhoPastaMes, row.Cells[1].Value.ToString().Trim());
+
+                    if (string.IsNullOrWhiteSpace(nomeDigitado) || !File.Exists(caminhoOriginal))
+                        continue;
+
+                    string nomeOriginal = Path.GetFileNameWithoutExtension(caminhoOriginal).ToUpper();
+                    if (nomeDigitado == nomeOriginal)
+                        continue;
+
+                    lb_info.Text = "Alterando " + nomeDigitado + " em " + nomeMes.ToUpper(PtBR) + "...";
+                    Application.DoEvents();
+
+                    string pasta = Path.GetDirectoryName(caminhoOriginal);
+                    string extensao = Path.GetExtension(caminhoOriginal);
+                    string novoCaminho = Path.Combine(pasta, nomeDigitado + extensao);
+
+                    try
                     {
-                        string nomeDigitado = row.Cells[0].Value.ToString().Trim(); // Novo nome sem extensão
-                        string caminhoOriginal = caminhoPlanilhas + @"\" + row.Cells[1].Value.ToString().Trim(); // Nome do arquivo original com extensão
-
-                        lb_info.Text = "Alterando " + nomeDigitado + " em " + nomeMes.ToUpper() + "...";
-
-                        if (!string.IsNullOrWhiteSpace(nomeDigitado) && File.Exists(caminhoOriginal))
+                        if (File.Exists(novoCaminho))
                         {
-                            string nomeOriginal = Path.GetFileNameWithoutExtension(caminhoOriginal);
+                            MessageBox.Show($"Já existe '{Path.GetFileName(novoCaminho)}' em {nomePasta}. Alteração ignorada.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            continue;
+                        }
 
-                            nomeOriginal = nomeOriginal.ToUpper();
-                            nomeDigitado = nomeDigitado.ToUpper();
-
-                            if (nomeDigitado != nomeOriginal)
-                            {
-                                string pasta = Path.GetDirectoryName(caminhoOriginal); // Obtém a pasta do arquivo original
-                                string extensao = Path.GetExtension(caminhoOriginal);  // Obtém a extensão original
-
-                                string novoCaminho = Path.Combine(pasta, nomeDigitado + extensao); // Cria o novo caminho
-
-                                try
-                                {
-                                    if (!File.Exists(novoCaminho)) // Evita sobrescrever arquivos
-                                    {
-                                        File.Move(caminhoOriginal, novoCaminho); // Renomeia o arquivo
-                                        //row.Cells[1].Value = novoCaminho; // Atualiza o caminho na grid
-                                    }
-
-                                    plan.AlteraNomeDoSocio(novoCaminho, nomeDigitado, "", "A", 0);
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show($"Erro ao renomear o arquivo: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                }
-                            }
+                        File.Move(caminhoOriginal, novoCaminho);
+                        if (plan.AlteraNomeDoSocio(novoCaminho, nomeDigitado, "", "A", 0))
+                        {
+                            alterados++;
                         }
                     }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Erro ao renomear o arquivo: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
-            } //Meses do Ano
+            }
+
+            return alterados;
         }
     }
 }
-

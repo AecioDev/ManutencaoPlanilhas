@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data.SQLite;
 using System.IO;
 using System.Windows.Forms;
@@ -16,13 +16,15 @@ public class MigrationManager
     {
         try
         {
+            EnsureDatabaseDirectoryExists();
+
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 connection.Open();
 
-                CreateTablesDB(connection);     //Adicionar aqui as tabelas do BD
-                CreateIndexes(connection);      //Adicionar aqui os indices
-                //UpdateTablesDB(connection);   //Criar aqui novos campos
+                CreateTablesDB(connection);     // Tabelas base do BD
+                UpdateTablesDB(connection);     // Garante colunas adicionadas em versões posteriores
+                CreateIndexes(connection);      // Índices
 
                 connection.Close();
             }
@@ -35,7 +37,19 @@ public class MigrationManager
             return false;
         }
     }
-    
+
+    private void EnsureDatabaseDirectoryExists()
+    {
+        var builder = new SQLiteConnectionStringBuilder(_connectionString);
+        if (!string.IsNullOrWhiteSpace(builder.DataSource))
+        {
+            string dir = Path.GetDirectoryName(builder.DataSource);
+            if (!string.IsNullOrWhiteSpace(dir) && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+        }
+    }
 
     private void CreateTablesDB(SQLiteConnection connection)
     {
@@ -46,7 +60,12 @@ public class MigrationManager
             tableQuery = @"
             CREATE TABLE Empresa (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                NomeEmpresa TEXT
+                NomeEmpresa TEXT,
+                cellValorTotal TEXT,
+                cellRecebimento TEXT,
+                cellMercPagas TEXT,
+                cellValSocio TEXT,
+                cellValFirma TEXT
             );";
 
             ExecuteQuery(tableQuery, connection);
@@ -57,7 +76,7 @@ public class MigrationManager
             tableQuery = @"
             CREATE TABLE Planilhas (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
-	            EmpresaId INTEGER,
+                EmpresaId INTEGER,
                 NomeArquivo TEXT,
                 ArquivoBlob BLOB,
                 DataInclusao TEXT,
@@ -115,44 +134,59 @@ public class MigrationManager
         }
     }
 
+    private void UpdateTablesDB(SQLiteConnection connection)
+    {
+        if (!TableExists(connection, "Empresa")) return;
+
+        string[] colunasEmpresa =
+        {
+            "cellValorTotal",
+            "cellRecebimento",
+            "cellMercPagas",
+            "cellValSocio",
+            "cellValFirma"
+        };
+
+        foreach (var coluna in colunasEmpresa)
+        {
+            if (!ColumnExiste(connection, "Empresa", coluna))
+            {
+                ExecuteQuery($"ALTER TABLE Empresa ADD COLUMN {coluna} TEXT;", connection);
+            }
+        }
+    }
+
     private void CreateIndexes(SQLiteConnection connection)
     {
-        string indexQuery = "";
+        if (!TableExists(connection, "Planilhas")) return;
 
-        if (TableExists(connection, "Planilhas") && !IndexExists(connection, "IDX_Planilhas_TipoAndData"))
+        // Substitui índice legado sem EmpresaId por índice composto com EmpresaId
+        if (IndexExists(connection, "IDX_Planilhas_TipoAndData"))
         {
-            indexQuery = @"CREATE UNIQUE INDEX ""IDX_Planilhas_TipoAndData"" ON ""Planilhas"" (""Tipo"", ""DataInclusao"" DESC);";
+            ExecuteQuery(@"DROP INDEX IF EXISTS ""IDX_Planilhas_TipoAndData"";", connection);
+        }
+
+        if (!IndexExists(connection, "IDX_Planilhas_EmpresaTipoData"))
+        {
+            string indexQuery = @"CREATE INDEX ""IDX_Planilhas_EmpresaTipoData"" ON ""Planilhas"" (""EmpresaId"", ""Tipo"", ""DataInclusao"" DESC);";
             ExecuteQuery(indexQuery, connection);
         }
     }
 
-    /* De3scomentar qd precisar
-    private void UpdateTablesDB(SQLiteConnection connection)
-    {
-        string columnQuery = "";
-
-        //Vai colocando as Colunas Necessárias para ser criadas no BD
-        if (!ColumnExiste(connection, "nomeTabela", "nomeColuna"))
-        {
-            columnQuery = "ALTER TABLE nomeTabela ADD COLUMN nomeColuna TEXT;";
-
-            ExecuteQuery(columnQuery, connection);
-        }
-    }
-    */
-
     private bool TableExists(SQLiteConnection connection, string tableName)
     {
-        using (var command = new SQLiteCommand($"SELECT name FROM sqlite_master WHERE type='table' AND name='{tableName}';", connection))
+        using (var command = new SQLiteCommand("SELECT name FROM sqlite_master WHERE type='table' AND name=@name;", connection))
         {
+            command.Parameters.AddWithValue("@name", tableName);
             return command.ExecuteScalar() != null;
         }
     }
 
     private bool IndexExists(SQLiteConnection connection, string indexName)
     {
-        using (var command = new SQLiteCommand($"SELECT name FROM sqlite_master WHERE type='index' AND name='{indexName}';", connection))
+        using (var command = new SQLiteCommand("SELECT name FROM sqlite_master WHERE type='index' AND name=@name;", connection))
         {
+            command.Parameters.AddWithValue("@name", indexName);
             return command.ExecuteScalar() != null;
         }
     }
@@ -168,12 +202,12 @@ public class MigrationManager
                     string coluna = reader["name"].ToString();
                     if (coluna.Equals(columnName, StringComparison.OrdinalIgnoreCase))
                     {
-                        return true; // A coluna existe
+                        return true;
                     }
                 }
             }
         }
-        return false; // A coluna não existe
+        return false;
     }
 
     private void ExecuteQuery(string sqlQuery, SQLiteConnection connection)
